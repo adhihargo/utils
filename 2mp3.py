@@ -10,7 +10,7 @@ from pprint import pprint
 import logging
 logging.basicConfig()
 logger = logging.getLogger("mp4_mp3")
-# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # -b: bitrate
 # -f: format
@@ -62,6 +62,7 @@ for srcFileName in fileNameList:
                   if streamTuple[0]=="audio"
                   ]
     optBitrate = audioBitrateList[0] + "k" if audioBitrateList else optDict.get("-b", "128k")
+    logger.debug("BR: %s", optBitrate)
 
     # no actual conversion if only testing
     if optDict.has_key("--test"):
@@ -70,7 +71,7 @@ for srcFileName in fileNameList:
 
     # execute conversion
     ffmpegCmdList = [
-        "ffmpeg", "-y" if optDict.has_key("-y") else "n",
+        "ffmpeg", "-y" if optDict.has_key("-y") else "-n",
         "-i", srcFilePath,
         "-ab", optBitrate,
         "-v", "32" if optDict.has_key("-v") else "24",
