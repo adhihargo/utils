@@ -50,7 +50,7 @@ def move_window(display_index: int, pos):
     :return:
     """
     display_geometry_list = get_display_geometry_list()
-    if display_index < 0 or display_index > len(display_geometry_list):
+    if display_index is None or display_index < 0 or display_index > len(display_geometry_list):
         return
 
     # first, remove maximized states
