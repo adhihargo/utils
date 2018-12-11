@@ -3,6 +3,13 @@ import argparse
 import re
 import subprocess
 
+X_KEY_RIGHT = "super+Right"
+X_KEY_LEFT = "super+Left"
+
+POS_MAXIMIZED = "m"
+POS_RIGHT = "r"
+POS_LEFT = "l"
+
 XWININFO_BIN = "xwininfo"
 XRANDR_BIN = "xrandr"
 XDOTOOL_BIN = "xdotool"
@@ -53,33 +60,41 @@ def move_window(display_index: int, pos):
     if display_index is None or display_index < 0 or display_index > len(display_geometry_list):
         return
 
-    # first, remove maximized states
-    subprocess.call(WMCTRL_EXEC_INIT + ["-b", "remove,maximized_vert,maximized_horz"])
+    # remove maximized states if not asked
+    if pos != POS_MAXIMIZED:
+        subprocess.call(WMCTRL_EXEC_INIT + ["-b", "remove,maximized_vert,maximized_horz"])
 
-    # then move to desired monitor and display
+    # move to desired monitor and display
     move_to_display(display_geometry_list, display_index, pos)
 
     # return vertical maximized state
-    pos_shortcut = "super+Left" if pos == 'l' else "super+Right"
-    subprocess.call([XDOTOOL_BIN, "key", pos_shortcut])
+    if pos == POS_MAXIMIZED:
+        subprocess.call(WMCTRL_EXEC_INIT + ["-b", "add,maximized_vert,maximized_horz"])
+    else:
+        pos_shortcut = X_KEY_LEFT if pos == POS_LEFT else X_KEY_RIGHT
+        subprocess.call([XDOTOOL_BIN, "key", pos_shortcut])
 
 
 def move_to_display(display_geometry_list, display_index: int, pos):
     display_geometry = display_geometry_list[display_index]
 
     x, y = int(display_geometry['X']), display_geometry['Y']
-    width = int(int(display_geometry['W']) / 2.0)
-    height = display_geometry['H']
-    if pos == 'r':
-        x += width
+    if pos == POS_MAXIMIZED:
+        command_list = WMCTRL_EXEC_INIT + ["-e", "0,{},{},-1,-1".format(x, y)]
+    else:
+        width = int(int(display_geometry['W']) / 2.0)
+        height = display_geometry['H']
+        if pos == POS_RIGHT:
+            x += width
 
-    command_list = WMCTRL_EXEC_INIT + ["-e", "0,{},{},{},{}".format(x, y, width, height)]
+        command_list = WMCTRL_EXEC_INIT + ["-e", "0,{},{},{},{}".format(x, y, width, height)]
+
     subprocess.call(command_list)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Poor man's GridMove.")
     parser.add_argument("-d", help="Move to display DISPLAY_ID", type=int, metavar="DISPLAY_ID", dest="display_index")
-    parser.add_argument("pos", help="Move to screen position indicated", choices=["l", "r"])
+    parser.add_argument("pos", help="Move to screen position indicated", choices=[POS_LEFT, POS_RIGHT, POS_MAXIMIZED])
     args = parser.parse_args()
     move_window(args.display_index, args.pos)
