@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 import ctypes
 import glob
@@ -72,7 +74,7 @@ def create_link(dir_path, pattern, link_name):
 
     if is_admin():
         logger.debug("Executing link command.")
-        subprocess.check_call(command_list, shell=True)
+        subprocess.check_call(command_list, shell=(sys.platform == "win32"))
     else:
         logger.debug("Not at elevated permission, try to run as admin.")
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
