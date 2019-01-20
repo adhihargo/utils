@@ -26,15 +26,24 @@ def get_dir_list(dir_path, pattern):
     logger.debug("Listing directories...")
     dir_path = os.path.normpath(dir_path)
     length_dir_path = len(dir_path)
-    path_pattern = os.path.join(dir_path, pattern)
+
+    is_abs_path = os.path.isabs(pattern)
+
+    path_pattern = pattern if is_abs_path \
+        else os.path.join(dir_path, pattern)
+    logger.debug("Path pattern: %s", path_pattern)
+
     file_stat_pair_list = []
     for fp in glob.iglob(path_pattern):
         if os.path.islink(fp) or not os.path.isdir(fp):
             # only list directories
             continue
 
+        logger.debug("Directory: %s", fp)
         fp_mtime = os.stat(fp).st_mtime
-        file_stat_pair_list.append((fp[length_dir_path + 1:], fp_mtime))
+        fp_processed = fp if is_abs_path \
+            else fp[length_dir_path + 1:]
+        file_stat_pair_list.append((fp_processed, fp_mtime))
 
     return [v[0] for v in sorted(file_stat_pair_list, key=lambda v: v[1])]
 
