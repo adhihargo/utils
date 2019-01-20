@@ -13,7 +13,6 @@ TEST_ROOT_DIR_PATH = r"D:/site-doc/"
 TEST_SUB_DIR_PATTERN = "blender_*"
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def is_admin():
@@ -110,6 +109,7 @@ def get_arg_parser():
     parser.add_argument("pattern", metavar="PATTERN")
     parser.add_argument("-d", dest="dir_path")
     parser.add_argument("-e", dest="erase_old_link", action="store_true")
+    parser.add_argument("-V", dest="verbose", action="store_true")
 
     return parser
 
@@ -128,6 +128,11 @@ def get_args():
 
 def start():
     args = get_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
     if verify_safe_link_path(args.link_name, args.erase_old_link):
         create_link(args.dir_path, args.pattern, args.link_name)
     else:
