@@ -71,12 +71,15 @@ def create_link(dir_path, pattern, link_name):
         logger.error("No matching directory found.")
         return
 
-    if is_admin():
-        logger.debug("Executing link command.")
-        subprocess.check_call(command_list, shell=(sys.platform == "win32"))
-    else:
-        logger.debug("Not at elevated permission, try to run as admin.")
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    try:
+        if is_admin():
+            logger.debug("Executing link command.")
+            subprocess.check_call(command_list, shell=(sys.platform == "win32"))
+        else:
+            logger.debug("Not at elevated permission, try to run as admin.")
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    except subprocess.CalledProcessError:
+        logger.error("Error on called process")
 
 
 def verify_safe_link_path(link_path, erase_old_link=False):
