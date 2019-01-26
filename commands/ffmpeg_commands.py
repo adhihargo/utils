@@ -34,3 +34,16 @@ def ffmpeg_convert_audio(srcFilePath, dstFilePath, bitrate, fileFormat, suppress
     logger.debug("EXE: %s", ffmpegCmdList)
     subprocess.call(ffmpegCmdList)
 
+
+def ffmpeg_cut(srcFilePath, dstFilePath, timeStart=None, timeEnd=None, suppressQuestion=False, verbose=False):
+    ffmpegCmdList = \
+        ["ffmpeg", "-y" if suppressQuestion else "-n",
+         "-i", srcFilePath, ] + \
+        (["-ss", timeStart] if timeStart else []) + \
+        (["-to", timeEnd, ] if timeEnd else []) + \
+        ["-c", "copy",
+         "-v", "32" if verbose else "24",
+         dstFilePath,
+         ]
+    logger.debug("EXE: %s", ffmpegCmdList)
+    subprocess.call(ffmpegCmdList)

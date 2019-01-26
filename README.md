@@ -4,7 +4,20 @@ Things I hack together on _mager_ weekends.
 
 ## ffmpeg_2mp3
 
-Something to convert video file to an MP3 audio file. It uses `ffprobe` on source file to determine appropriate audio bitrate. 
+Something to convert video file to an MP3 audio file. It uses `ffprobe` on source file to determine appropriate audio bitrate.
+
+## ffmpeg_cut
+
+Losslessly cut an audio or video file.
+
+Usage: `ffmpeg_cut.py [-h] [-s START] [-e END] [-y] [-V] [--suffix SUFFIX] FILE` 
+
+Arguments:
+- `-s START`: Timestamp of starting point to cut from.
+- `-e END`: Timestamp of end point to cut to.
+- `--suffix SUFFIX`: Suffix to be appended to resulting filename.
+- `-y`: Suppress question if file exists.
+- `-V`: Verbosity
 
 ## lnlatest
 
