@@ -2,7 +2,7 @@
 
 Things I hack together on _mager_ weekends. 
 
-## 2mp3
+## ffmpeg_2mp3
 
 Something to convert video file to an MP3 audio file. It uses `ffprobe` on source file to determine appropriate audio bitrate. 
 
