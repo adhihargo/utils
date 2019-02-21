@@ -15,6 +15,7 @@ def ffprobe_audio_bitrate(srcFilePath, optBitrate):
                   for line in subprocess.check_output(ffprobeCmdList).split("\n")
                   ]
     audioBitrateList = [streamTuple[1][:-3]
+    audioBitrateList = [streamTuple[1].strip()[:-3]
                         for streamTuple in streamList
                         if streamTuple[0] == "audio"
                         ]
