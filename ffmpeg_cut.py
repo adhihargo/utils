@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 import argparse
 import logging
 import os
-
-from commands.ffmpeg_commands import ffmpeg_cut
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+sys.path.append(os.path.dirname(__file__))
+from utils_lib import ffmpeg_commands
 
 
 def get_arg_parser():
@@ -31,7 +34,8 @@ def main():
     timeEnd = args.end
     suppressQuestion = args.suppressQuestion
     verbose = args.verbose
-    ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd, suppressQuestion=suppressQuestion, verbose=verbose)
+    ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd,
+                               suppressQuestion=suppressQuestion, verbose=verbose)
 
 
 def get_dstFileName(srcFileName, suffix="_"):

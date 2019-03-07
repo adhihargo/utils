@@ -6,10 +6,10 @@ import logging
 import os
 import sys
 
-from commands.ffmpeg_commands import ffmpeg_convert_audio, ffprobe_audio_bitrate
-
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("mp4_mp3")
+logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+sys.path.append(os.path.dirname(__file__))
+from utils_lib import ffmpeg_commands
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
         logger.debug("SRC: %s", srcFileName)
         logger.debug("DST: %s", dstFileName)
 
-        optBitrate = ffprobe_audio_bitrate(srcFilePath, optDict.get("-b", "128k"))
+        optBitrate = ffmpeg_commands.ffprobe_audio_bitrate(srcFilePath, optDict.get("-b", "128k"))
         logger.debug("BR: %s", optBitrate)
 
         # no actual conversion if only testing
@@ -53,7 +53,8 @@ def main():
         # execute conversion
         optVerbose = optDict.has_key("-v")
         optSuppressQuestion = optDict.has_key("-y")
-        ffmpeg_convert_audio(srcFilePath, dstFilePath, optBitrate, optFormat, optSuppressQuestion, optVerbose)
+        ffmpeg_commands.ffmpeg_convert_audio(srcFilePath, dstFilePath, optBitrate, optFormat, optSuppressQuestion,
+                                             optVerbose)
 
 
 def get_dstFileName(srcFileName, fileFormat):
