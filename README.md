@@ -6,6 +6,25 @@ Things I hack together on _mager_ weekends.
 
 Something to convert video file to an MP3 audio file. It uses `ffprobe` on source file to determine appropriate audio bitrate.
 
+## ffmpeg_strip_audio/video
+
+At times, you don't need the noise or just the noise (for further processing).
+
+Usage: `ffmpeg_strip_audio FILE`
+
+With input `a.mp4`, output of `strip_audio` is `a-.mp4` and for `strip_video` is `a_audio.mp4`.
+
+## ffmpeg_join_av
+
+Losslessly rejoin audio and video files. I loathe watching videos with ridiculously low audio volume, so I extract the audio to process in a DAW, then join it back with this script. Why such convoluted workflow? Saves me hours of recompressing, that's why.
+
+Usage: `ffmpeg_join_av FILE`
+
+The assumptions are that `FILE` is an MP4 video file, and a corresponding `FILE_audio.m4a` to join it with exists.
+
+Example:
+- `ffmpeg_join_av a.mp4` joins `a.mp4` with `a_audio.mp4` (if exist) into `a_av.mp4`.
+
 ## ffmpeg_cut
 
 Losslessly cut an audio or video file.
