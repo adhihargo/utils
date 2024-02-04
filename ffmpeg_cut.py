@@ -8,11 +8,11 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 sys.path.append(os.path.dirname(__file__))
-from utils_lib import ffmpeg_commands
+from utils_lib import ffmpeg_commands, get_dstFileName
 
 
-def get_arg_parser():
-    parser = argparse.ArgumentParser(description="Cut an audio / video file.")
+def get_parser():
+    parser = argparse.ArgumentParser(description="Cut an audio/video file.")
     parser.add_argument("file_name", metavar="FILE")
     parser.add_argument("-s", dest="start")
     parser.add_argument("-e", dest="end")
@@ -24,27 +24,17 @@ def get_arg_parser():
 
 
 def main():
-    parser = get_arg_parser()
+    parser = get_parser()
     args = parser.parse_args()
 
-    suffix = args.suffix
     srcFilePath = args.file_name
-    dstFilePath = get_dstFileName(srcFilePath, suffix)
+    dstFilePath = get_dstFileName(srcFilePath, args.suffix)
     timeStart = args.start
     timeEnd = args.end
     suppressQuestion = args.suppressQuestion
     verbose = args.verbose
     ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd,
                                suppressQuestion=suppressQuestion, verbose=verbose)
-
-
-def get_dstFileName(srcFileName, suffix="_"):
-    if not suffix:
-        raise Exception("Suffix must not be empty.")
-
-    baseFileName, baseFileExt = os.path.splitext(srcFileName)
-    dstFileName = "{}{}{}".format(baseFileName, suffix, baseFileExt)
-    return dstFileName
 
 
 if __name__ == '__main__':
