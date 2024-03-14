@@ -2,14 +2,16 @@ import argparse
 import logging
 import re
 import subprocess
+from collections import namedtuple
 
 from utils_lib import get_dstFileName
 from utils_lib.ffmpeg_commands import ffmpeg_amplify
 
+AudioInfo = namedtuple("AudioInfo", ("max_volume", "codec", "bitrate"))
 logger = logging.getLogger('ffmpeg_amplify')
 
 
-def get_max_volume(filePath):
+def get_audio_info(filePath):
     checkVolumeCmdList = ["ffmpeg", "-hide_banner", "-i", filePath, "-af", "volumedetect", "-vn", "-sn", "-dn",
                           "-f", "null", "NUL"]
     try:
@@ -17,14 +19,23 @@ def get_max_volume(filePath):
     except subprocess.CalledProcessError:
         # no audio stream found
         ffmpegOutputStr = ""
+
+    codecStr = None
+    audioBitrateStr = None
+    audioInfoRe = re.compile(r"Stream .+Audio: (?P<codec>\S+).+ (?P<bitrate>\d+) (?P<unit>.)b/s", re.IGNORECASE)
     maxVolumeRe = re.compile(r"max_volume:\s*(?P<vol>-?\d+\.\d+)\s*dB", re.IGNORECASE)
     maxVolume = 0.0
     for line in ffmpegOutputStr.split("\n"):
+        if codecStr is None:
+            match = audioInfoRe.search(line)
+            if match:
+                codecStr = match.group("codec")
+                audioBitrateStr = "{}{}".format(match.group("bitrate"), match.group("unit"))
         match = maxVolumeRe.search(line)
         if not match: continue
         maxVolume = float(match.group("vol"))
         break
-    return maxVolume
+    return AudioInfo(maxVolume, codecStr, audioBitrateStr)
 
 
 def get_parser():
@@ -46,7 +57,8 @@ def main():
 
     srcFilePath = args.file_name
     dstFilePath = get_dstFileName(srcFilePath, args.suffix)
-    maxVolume = get_max_volume(srcFilePath)
+    audioInfo = get_audio_info(srcFilePath)
+    maxVolume = audioInfo.max_volume
     if args.show_only:
         logger.info("MAX VOLUME: {}".format(maxVolume))
         return
@@ -58,7 +70,7 @@ def main():
         logger.info("Skipping file: {}".format(srcFilePath))
         return
 
-    ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume,
+    ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume, codec=audioInfo.codec, bitrate=audioInfo.bitrate,
                    suppressQuestion=args.suppressQuestion, verbose=args.verbose)
 
 

@@ -88,9 +88,11 @@ def ffmpeg_cut(srcFilePath, dstFilePath, timeStart=None, timeEnd=None, suppressQ
     subprocess.call(ffmpegCmdList)
 
 
-def ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume, suppressQuestion=False, verbose=False):
-    amplifyCmdList = ["ffmpeg", "-y" if suppressQuestion else "-n", "-i", srcFilePath, "-v", "32" if verbose else "24",
-                      "-vcodec", "copy", "-af", "volume={}dB".format(ampVolume),
-                      dstFilePath]
+def ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume, codec=None, bitrate=None, suppressQuestion=False, verbose=False):
+    amplifyCmdList = (["ffmpeg", "-y" if suppressQuestion else "-n", "-i", srcFilePath, "-v", "32" if verbose else "24",
+                       "-vcodec", "copy", "-af", "volume={}dB".format(ampVolume)] +
+                      (["-acodec", codec] if codec else []) +
+                      (["-ab", bitrate] if bitrate else []) +
+                      [dstFilePath])
     logger.debug("AMPLIFYING {}dB: {}".format(ampVolume, srcFilePath))
     subprocess.call(amplifyCmdList)
