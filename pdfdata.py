@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import os.path
 import re
 import subprocess
@@ -9,7 +10,7 @@ TOCLineInfo = namedtuple("TOCLineInfo", ["level", "title", "page"])
 LINE_RE = re.compile(r"(?P<LEVEL>\s*)(?P<TITLE>.+)\s+(?P<PAGE>\d+)\s*$")
 
 
-def get_toc_list(file_path):
+def read_tocfile(file_path):
     toc_list = []
     with open(file_path, 'r') as f:
         for line_index, line in enumerate(f, start=1):
@@ -25,28 +26,30 @@ def get_toc_list(file_path):
     return toc_list
 
 
-def toc_to_pdfdata(toc_list):
+def toclist_to_datalist(toc_list):
     line_list = []
     for toc in toc_list:
-        line_list.extend([
-            "BookmarkBegin",
-            "BookmarkTitle: {}".format(toc.title),
-            "BookmarkLevel: {}".format(toc.level),
-            "BookmarkPageNumber: {}".format(toc.page)
-        ])
+        line_list.append(
+            "BookmarkBegin\n" +
+            "BookmarkTitle: {}\n".format(toc.title) +
+            "BookmarkLevel: {}\n".format(toc.level) +
+            "BookmarkPageNumber: {}\n".format(toc.page)
+        )
     return line_list
 
 
-def get_toc_tempfile(file_path):
-    toc_list = get_toc_list(file_path)
-    line_list = toc_to_pdfdata(toc_list)
-    tf = tempfile.NamedTemporaryFile(mode="w+", delete=False)
-    for l in line_list:
-        tf.write(l)
-        tf.flush()
-        tf.write("\n")
-    tf.seek(0)
-    return tf
+def write_datafile(data_file, data_list):
+    for l in data_list:
+        data_file.write(l)
+    data_file.seek(0)
+
+
+@contextlib.contextmanager
+def temp_file():
+    tf = tempfile.NamedTemporaryFile("w+", delete=False)
+    yield tf
+    tf.close()
+    os.remove(tf.name)
 
 
 def generate_output_path(input_path):
@@ -82,11 +85,11 @@ def main():
         if output_path is None:
             output_path = generate_output_path(input_path)
 
-        with get_toc_tempfile(args.toc) as toc_file:
-            toc_file_path = toc_file.name
-            subprocess.run(["pdftk", input_path, "update_info", toc_file_path, "output", output_path])
-        if os.path.isfile(toc_file_path):
-            os.remove(toc_file_path)
+        with temp_file() as tf:
+            toc_list = read_tocfile(args.toc)
+            data_list = toclist_to_datalist(toc_list)
+            write_datafile(tf, data_list)
+            subprocess.run(["pdftk", input_path, "update_info", tf.name, "output", output_path])
 
 
 if __name__ == '__main__':
