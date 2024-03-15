@@ -8,6 +8,11 @@ from collections import namedtuple
 
 TOCLineInfo = namedtuple("TOCLineInfo", ["level", "title", "page"])
 LINE_RE = re.compile(r"(?P<LEVEL>\s*)(?P<TITLE>.+)\s+(?P<PAGE>\d+)\s*$")
+PDF_LINE_RE = re.compile(r"""
+BookmarkTitle\s*:\s*(?P<TITLE>.*)\s*$|
+BookmarkLevel\s*:\s*(?P<LEVEL>\d+)\s*$|
+BookmarkPageNumber\s*:\s*(?P<PAGE>\d+)\s*$
+""", re.VERBOSE)
 
 
 def read_tocfile(file_path):
@@ -44,6 +49,33 @@ def write_datafile(data_file, data_list):
     data_file.seek(0)
 
 
+def read_datafile(data_file):
+    temp_info = {}
+    toc_list = []
+    for line in data_file.readlines():
+        match = PDF_LINE_RE.search(line)
+        if line.find("BookmarkBegin") > -1:
+            temp_info.clear()
+        elif line.find("BookmarkPageNumber") > -1 and match:
+            temp_info["PAGE"] = int(match.group("PAGE"))
+        elif line.find("BookmarkTitle") > -1 and match:
+            temp_info["TITLE"] = match.group("TITLE")
+        elif line.find("BookmarkLevel") > -1 and match:
+            temp_info["LEVEL"] = int(match.group("LEVEL"))
+        elif temp_info:
+            temp_info.clear()
+
+        if all((k in temp_info for k in ["PAGE", "TITLE", "LEVEL"])):
+            toc_list.append(TOCLineInfo(temp_info["LEVEL"], temp_info["TITLE"], temp_info["PAGE"]))
+    return toc_list
+
+
+def write_tocfile(toc_file, toc_list):
+    for toc in toc_list:
+        line = "{}{} {}\n".format("\t" * (toc.level - 1), toc.title, toc.page)
+        toc_file.write(line)
+
+
 @contextlib.contextmanager
 def temp_file():
     tf = tempfile.NamedTemporaryFile("w+", delete=False)
@@ -63,6 +95,7 @@ def get_parser():
     parser.add_argument("-d", "--dump", nargs="?", help="Dump PDF data to file.")
     parser.add_argument("-s", "--set", nargs="?", help="Set PDF data from file.")
     parser.add_argument("-t", "--toc", nargs="?", help="Set PDF bookmark data from TOC file.")
+    parser.add_argument("-T", "--dump_toc", nargs="?", help="Dump PDF bookmark data to a TOC file.")
     parser.add_argument("-o", "--output", nargs="?", help="Output PDF file if setting PDF data.")
     parser.add_argument('file')
     return parser
@@ -80,6 +113,13 @@ def main():
         if output_path is None:
             output_path = generate_output_path(input_path)
         subprocess.run(["pdftk", input_path, "update_info", args.set, "output", output_path])
+
+    elif isinstance(args.dump_toc, str):
+        with temp_file() as tf:
+            subprocess.run(["pdftk", input_path, "dump_data", "output", tf.name])
+            toc_list = read_datafile(tf)
+        with open(args.dump_toc, "w") as toc_file:
+            write_tocfile(toc_file, toc_list)
     elif isinstance(args.toc, str):
         output_path = args.output
         if output_path is None:
