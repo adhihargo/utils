@@ -91,13 +91,13 @@ def generate_output_path(input_path):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("-d", "--dump", nargs="?", help="Dump PDF data to file.")
-    parser.add_argument("-s", "--set", nargs="?", help="Set PDF data from file.")
-    parser.add_argument("-t", "--toc", nargs="?", help="Set PDF bookmark data from TOC file.")
-    parser.add_argument("-T", "--dump_toc", nargs="?", help="Dump PDF bookmark data to a TOC file.")
+    parser = argparse.ArgumentParser(description='Edit PDF file metadata, using PDFtk')
+    parser.add_argument("-d", "--dump", nargs="?", metavar="DATAFILE", help="Dump PDF data to file.")
+    parser.add_argument("-s", "--set", nargs="?", metavar="DATAFILE", help="Set PDF data from file.")
+    parser.add_argument("-T", "--dump_toc", nargs="?", metavar="TOCFILE", help="Dump PDF bookmark data to a TOC file.")
+    parser.add_argument("-t", "--toc", nargs="?", metavar="TOCFILE", help="Set PDF bookmark data from TOC file.")
     parser.add_argument("-o", "--output", nargs="?", help="Output PDF file if setting PDF data.")
-    parser.add_argument('file')
+    parser.add_argument('file_path', metavar="FILE")
     return parser
 
 
@@ -105,7 +105,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    input_path = args.file
+    input_path = args.file_path
     if isinstance(args.dump, str):
         subprocess.run(["pdftk", input_path, "dump_data", "output", args.dump])
     elif isinstance(args.set, str):
