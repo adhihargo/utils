@@ -1,6 +1,6 @@
 # Utilities
 
-Things I hack together on _mager_ weekends. 
+Things I hack together on _mager_ weekends.
 
 ## ffmpeg_2mp3
 
@@ -52,12 +52,27 @@ Losslessly cut an audio or video file.
 ### Usage: 
 `ffmpeg_cut.py [-h] [-s START] [-e END] [-y] [-V] [--suffix SUFFIX] FILE` 
 
-Arguments:
+### Arguments:
 - `-s START`: Timestamp of starting point to cut from.
 - `-e END`: Timestamp of end point to cut to.
 - `--suffix SUFFIX`: Suffix to be appended to resulting filename.
+- `-c`: Mark input `FILE` as config file. If set, other switches but `-y` and `-V` are ignored.
 - `-y`: Suppress question if file exists.
 - `-V`: Verbosity
+
+If `-c` is set, script assumes `FILE` to be a configuration file with the following format:
+
+<pre>
+[main]
+src=FILE.mp4  # path to file
+sections=1 2 3  # space separated sections to process
+
+[sections]
+1=
+2=01:01  # starting timestamp for a section, first one left empty  
+3=02:02
+9=03:03  # to write any but the last section, put any number 
+</pre>
 
 ## lnlatest
 
@@ -90,11 +105,11 @@ Dump and update PDF metadata, using [PDFtk](https://www.pdflabs.com/tools/pdftk-
                   [-t [TOCFILE]] [-o [OUTPUT]]
                   FILE`
 
--`-d [DATAFILE]`, `--dump [DATAFILE]`: Dump PDF data to file.
--`-s [DATAFILE]`, `--set [DATAFILE]`: Set PDF data from file.
--`-T [TOCFILE]`, `--dump_toc [TOCFILE]`: Dump PDF bookmark data to a TOC file.
--`-t [TOCFILE]`, `--toc [TOCFILE]`: Set PDF bookmark data from TOC file.
--`-o [OUTPUT]`, `--output [OUTPUT]`: Output PDF file if setting PDF data.
+- `-d [DATAFILE]`, `--dump [DATAFILE]`: Dump PDF data to file.
+- `-s [DATAFILE]`, `--set [DATAFILE]`: Set PDF data from file.
+- `-T [TOCFILE]`, `--dump_toc [TOCFILE]`: Dump PDF bookmark data to a TOC file.
+- `-t [TOCFILE]`, `--toc [TOCFILE]`: Set PDF bookmark data from TOC file.
+- `-o [OUTPUT]`, `--output [OUTPUT]`: Output PDF file if setting PDF data.
 
 ## wmctrl_gridmove
 
@@ -103,7 +118,7 @@ When I use Gnome DE, I miss [JGPaiva's GridMove](http://www.dcmembers.com/jgpaiv
 ### Usage: 
 `wmctrl_gridmove.py [-h] [-d DISPLAY_ID] {l,r,m}`
 
-Arguments:
+### Arguments:
 - `-d DISPLAY_ID`: Move active window to assigned monitor, 0-indexed.
 - `POS`: Positional argument, either `l`, `r` or `m` to move and resize active window to the left or right side or maximized, respectively, of assigned monitor.
 
