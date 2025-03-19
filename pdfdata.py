@@ -106,17 +106,18 @@ def main():
     args = parser.parse_args()
 
     input_path = args.file_path
+    cmp_proc: subprocess.CompletedProcess = None
     if isinstance(args.dump, str):
         subprocess.run(["pdftk", input_path, "dump_data", "output", args.dump])
     elif isinstance(args.set, str):
         output_path = args.output
         if output_path is None:
             output_path = generate_output_path(input_path)
-        subprocess.run(["pdftk", input_path, "update_info", args.set, "output", output_path])
+        cmp_proc = subprocess.run(["pdftk", input_path, "update_info", args.set, "output", output_path])
 
     elif isinstance(args.dump_toc, str):
         with temp_file() as tf:
-            subprocess.run(["pdftk", input_path, "dump_data", "output", tf.name])
+            cmp_proc = subprocess.run(["pdftk", input_path, "dump_data", "output", tf.name])
             toc_list = read_datafile(tf)
         with open(args.dump_toc, "w") as toc_file:
             write_tocfile(toc_file, toc_list)
@@ -129,7 +130,12 @@ def main():
             toc_list = read_tocfile(args.toc)
             data_list = toclist_to_datalist(toc_list)
             write_datafile(tf, data_list)
-            subprocess.run(["pdftk", input_path, "update_info", tf.name, "output", output_path])
+            cmd_list = ["pdftk", input_path, "update_info", tf.name, "output", output_path]
+            cmp_proc = subprocess.run(
+                cmd_list, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+
+    if cmp_proc and cmp_proc.returncode:
+        print(cmp_proc.stdout.decode("utf-8"))
 
 
 if __name__ == '__main__':
