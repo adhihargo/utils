@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import re
 import subprocess
 from collections import namedtuple
@@ -40,7 +41,7 @@ def get_audio_info(filePath):
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Amplify audio/video file")
-    parser.add_argument("file_name", metavar="FILE")
+    parser.add_argument("files", metavar="FILE", nargs="*")
     parser.add_argument("-v", "--volume", type=float, help="Manually set volume amplification level")
     parser.add_argument("-s", "--show_only", action="store_true", help="Show file's current volume level, then exit")
     parser.add_argument("-m", "--min_threshold", type=float, default=-1.0)
@@ -55,23 +56,28 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    srcFilePath = args.file_name
-    dstFilePath = get_dstFileName(srcFilePath, args.suffix)
-    audioInfo = get_audio_info(srcFilePath)
-    maxVolume = audioInfo.max_volume
-    if args.show_only:
-        logger.info("MAX VOLUME: {}".format(maxVolume))
-        return
+    srcFileList = args.files
+    for srcFilePath in srcFileList:
+        if not os.path.isfile(srcFilePath):
+            logger.info("Path nonexistent, skipping: {}".format(srcFilePath))
+            continue
 
-    ampVolume = args.volume if args.volume else abs(maxVolume)
-    min_threshold = abs(args.min_threshold) * -1
-    max_threshold = abs(args.max_threshold) * -1
-    if not args.volume and (maxVolume >= min_threshold or maxVolume <= max_threshold):
-        logger.info("Skipping file: {}".format(srcFilePath))
-        return
+        dstFilePath = get_dstFileName(srcFilePath, args.suffix)
+        audioInfo = get_audio_info(srcFilePath)
+        maxVolume = audioInfo.max_volume
+        if args.show_only:
+            logger.info("FILE: {}\nMAX VOLUME: {}".format(srcFilePath, maxVolume))
+            continue
 
-    ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume, codec=audioInfo.codec, bitrate=audioInfo.bitrate,
-                   suppressQuestion=args.suppressQuestion, verbose=args.verbose)
+        ampVolume = args.volume if args.volume else abs(maxVolume)
+        min_threshold = abs(args.min_threshold) * -1
+        max_threshold = abs(args.max_threshold) * -1
+        if not args.volume and (maxVolume >= min_threshold or maxVolume <= max_threshold):
+            logger.info("Skipping file: {}".format(srcFilePath))
+            continue
+
+        ffmpeg_amplify(srcFilePath, dstFilePath, ampVolume, codec=audioInfo.codec, bitrate=audioInfo.bitrate,
+                       suppressQuestion=args.suppressQuestion, verbose=args.verbose)
 
 
 if __name__ == '__main__':
