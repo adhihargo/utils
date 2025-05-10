@@ -4,6 +4,7 @@ import argparse
 import configparser
 import logging
 import os
+import subprocess
 import sys
 
 logging.basicConfig(level=logging.DEBUG)
@@ -67,16 +68,18 @@ def main():
             logger.info("Processing section {}: {} - {}".format(section, sectionStart, sectionEnd))
             ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, sectionStart, sectionEnd,
                                        suppressQuestion=args.suppressQuestion, verbose=args.verbose)
-        return
 
-    srcFilePath = args.file_name
-    dstFilePath = get_dstFileName(srcFilePath, args.suffix)
-    timeStart = args.start
-    timeEnd = args.end
-    suppressQuestion = args.suppressQuestion
-    verbose = args.verbose
-    ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd,
-                               suppressQuestion=suppressQuestion, verbose=verbose)
+    else:
+        srcFilePath = args.file_name
+        dstFilePath = get_dstFileName(srcFilePath, args.suffix)
+        timeStart = args.start
+        timeEnd = args.end
+        suppressQuestion = args.suppressQuestion
+        verbose = args.verbose
+        ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd,
+                                   suppressQuestion=suppressQuestion, verbose=verbose)
+
+    subprocess.call("echo /|choice /N 2> nul | echo dummy > nul", shell=True)
 
 
 if __name__ == '__main__':
