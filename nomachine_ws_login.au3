@@ -5,6 +5,7 @@ Global Const $ENV_VAR_NAME = "VPN_PWD_FC"
 
 Opt("WinTitleMatchMode", 1)
 Opt("MouseCoordMode", 2)
+Opt("SendKeyDelay", 10)
 Main()
 Exit
 
@@ -34,11 +35,13 @@ Func Main()
 		$funcLoop = False
 	WEnd
 
-	;~ Click somewhere in the window, tab to password field
-	Send("{ESC}{ESC}{ESC}{ESC}{ESC}")
-;~ 	MouseClick("left", 100, 100)
-	Sleep(1000)
+	;~ Trigger password input
+	For $i = 1 To 2
+		Send("{ESC}")
+		Sleep(500)
+	Next
 
+	;- Switch out of and back into input widget, to check if it gets focus
 	;- Input password
-	Send($pwd & "{ENTER}")
+	Send("{TAB}+{TAB}" & $pwd & "{ENTER}")
 EndFunc
