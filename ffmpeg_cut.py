@@ -2,12 +2,12 @@
 
 import argparse
 import configparser
+import datetime
 import logging
 import os
 import subprocess
 import sys
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 sys.path.append(os.path.dirname(__file__))
 from utils_lib import ffmpeg_commands, get_dstFileName
@@ -56,8 +56,10 @@ def main():
 
         sectionPairs = config.items("sections")
         for index, (section, value) in enumerate(sectionPairs):
+            timeStart = datetime.datetime.now()
+
             # skip sections not listed in config["main"]["sections"]
-            if sectionList and section not in sectionList:
+            if section not in sectionList:
                 continue
 
             sectionStart = value or None
@@ -68,6 +70,10 @@ def main():
             logger.info("Processing section {}: {} - {}".format(section, sectionStart, sectionEnd))
             ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, sectionStart, sectionEnd,
                                        suppressQuestion=args.suppressQuestion, verbose=args.verbose)
+
+            timeEnd = datetime.datetime.now()
+            timeDuration = timeEnd - timeStart
+            logger.info("Section {} processing duration: {}".format(section, timeDuration))
 
     else:
         srcFilePath = args.file_name
@@ -83,4 +89,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     main()
