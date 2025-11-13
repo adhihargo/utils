@@ -6,6 +6,10 @@ Things I hack together on _mager_ weekends.
 
 Something to convert video file to an MP3 audio file. It uses `ffprobe` on source file to determine appropriate audio bitrate.
 
+## ffmpeg_2mp4
+
+Blindly convert to MP4, any files that can logically be converted to MP4 using `ffmpeg`. 
+
 ## ffmpeg_strip_audio/video
 
 At times, you don't need the noise or just the noise (for further processing).
@@ -87,6 +91,17 @@ Arguments:
 - `LINK`: Symlink name to be created.
 - `PATTERN`: Glob pattern of directories to be matched. For example, `emacs-*` matches `emacs-26.1-x86_64`, `emacs-25.0-x86_64`, etc. Latest matching directory will be targeted if found.
 
+## create_prog_batch / create_prog_shortcut
+
+For each file passed as arguments, create shortcut either as batch script or Windows link. `create_prog_shortcut` depends on `create-shortcut.exe` included in [Git for Windows](https://github.com/git-for-windows/git) distribution. 
+
+### Usage:
+
+* `create_prog_batch FILE+`
+* `create_prog_shortcut FILE+`
+
+These will place a shortcut to each `FILE`s in the path stored in `PROG_PATH` environment variable (defaults to `C:\prog`).
+
 ## pdf2qdf, qdf2pdf
 
 Converts PDF to and from QDF, using [qpdf](https://github.com/qpdf/qpdf). I use these to edit a PDF file's page numbering.
@@ -110,6 +125,19 @@ Dump and update PDF metadata, using [PDFtk](https://www.pdflabs.com/tools/pdftk-
 - `-T [TOCFILE]`, `--dump_toc [TOCFILE]`: Dump PDF bookmark data to a TOC file.
 - `-t [TOCFILE]`, `--toc [TOCFILE]`: Set PDF bookmark data from TOC file.
 - `-o [OUTPUT]`, `--output [OUTPUT]`: Output PDF file if setting PDF data.
+
+## act / deact
+
+Just a pair of scripts to save keystrokes, to activate/deactivate Python virtual environment.
+
+### Usage:
+
+* `act C:\prog\venv\37_app` is akin to calling that venv's `activate.bat`.
+* `deact` exists just to save 5+ keystrokes to call `deactivate.bat`.
+
+## pkill
+
+Kill a process by its executable basename.
 
 ## wmctrl_gridmove
 
