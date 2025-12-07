@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 sys.path.append(os.path.dirname(__file__))
@@ -54,16 +55,33 @@ def main():
         sectionStr = config["main"].get("sections", "")
         sectionList = sectionStr.split(" ") if sectionStr else []
 
+        sectionDict = {}
+        for sectionName in sectionList:
+            sectionTest = sectionName.endswith("*")
+            sectionData = {"test": sectionTest}
+            sectionDict[sectionName[:-1] if sectionTest else sectionName] = sectionData
+
         sectionPairs = config.items("sections")
         for index, (section, value) in enumerate(sectionPairs):
             timeStart = datetime.datetime.now()
 
             # skip sections not listed in config["main"]["sections"]
-            if section not in sectionList:
+            sectionData = sectionDict.get(section)
+            if not sectionData:
                 continue
 
             sectionStart = value or None
-            sectionEnd = sectionPairs[index + 1][1] if (index < len(sectionPairs) - 1) else None
+            if sectionData["test"]:
+                startStr = sectionStart if sectionStart else "0:0:0"
+                dotPos = startStr.find(".")  # exclude milliseconds if present
+                startTime = time.strptime(startStr[:dotPos if dotPos > -1 else len(startStr)], "%H:%M:%S")
+
+                # sections suffixed with '*' will be processed only the first 5 seconds, intended for test cuts
+                start = datetime.timedelta(hours=startTime.tm_hour, minutes=startTime.tm_min, seconds=startTime.tm_sec)
+                end = start + datetime.timedelta(seconds=5)
+                sectionEnd = str(end)
+            else:
+                sectionEnd = sectionPairs[index + 1][1] if (index < len(sectionPairs) - 1) else None
             sectionSuffix = "_{:>02}".format(section)
             dstFilePath = get_dstFileName(srcFilePath, sectionSuffix)
 

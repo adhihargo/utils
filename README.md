@@ -78,6 +78,10 @@ sections=1 2 3  # space separated sections to process
 9=03:03  # to write any but the last section, put any number 
 </pre>
 
+Notes: 
+- Section names suffixed with `*` will be processed only the first 5 seconds, intended for test cuts.
+- Timestamps suffixed with `-` will be counted as subtraction from total duration.
+
 ## lnlatest
 
 Instead of using installers, I prefer to extract zipped versions of programs I use, then symlink them to a generic name (e.g. `E:\blender-2.79b-windows64` to `E:\blender`). Shortcuts can then just refer to the symlink and remain unchanged, even if the symlink points to a newer version. This script creates a link to the latest subdirectory in a path with names matching a pattern. Wrote it because I'm sick of constantly removing old symlink to create a different one targeting newer (manually typed) directory path.
