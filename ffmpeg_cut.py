@@ -49,7 +49,7 @@ def main():
 
         srcFilePath = config["main"]["src"]
         if not os.path.isfile(srcFilePath):
-            parser.error("source file does not exist.")
+            parser.error("source file does not exist: {}".format(srcFilePath))
 
         # whitespace-separated sequence of section names to process
         sectionStr = config["main"].get("sections", "")
@@ -74,12 +74,24 @@ def main():
             if sectionData["test"]:
                 startStr = sectionStart if sectionStart else "0:0:0"
                 dotPos = startStr.find(".")  # exclude milliseconds if present
-                startTime = time.strptime(startStr[:dotPos if dotPos > -1 else len(startStr)], "%H:%M:%S")
+                startTime = None
+                for fmtStr in ["%H:%M:%S", "%M:%S", "%S"]:
+                    try:
+                        startMinusMsecStr = startStr[:dotPos if dotPos > -1 else len(startStr)]
+                        startTime = time.strptime(startMinusMsecStr, fmtStr)
+                    except ValueError:
+                        pass
+                if startTime is None:
+                    raise ValueError("Invalid time string: {}".format(startStr))
 
                 # sections suffixed with '*' will be processed only the first 5 seconds, intended for test cuts
                 start = datetime.timedelta(hours=startTime.tm_hour, minutes=startTime.tm_min, seconds=startTime.tm_sec)
                 end = start + datetime.timedelta(seconds=5)
                 sectionEnd = str(end)
+
+                # append milliseconds to even out duration
+                if dotPos > -1:
+                    sectionEnd += startStr[dotPos:]
             else:
                 sectionEnd = sectionPairs[index + 1][1] if (index < len(sectionPairs) - 1) else None
             sectionSuffix = "_{:>02}".format(section)
