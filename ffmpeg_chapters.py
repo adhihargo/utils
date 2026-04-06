@@ -1,24 +1,25 @@
 import argparse
+import datetime
 import os
 import re
 import subprocess
 import sys
+import tempfile
 
 from utils_lib import get_dstFileName
+from utils_lib.ffmpeg_commands import ffprobe_duration
 
 CHAPTER_FILENAME = "chapters.txt"
-METADATA_FILENAME = "metadata.txt"
 
 
-def append_metadataFile(inputChapterFilePath, outputMetadataFilePath):
+def append_metadataFile(inputChapterFilePath, outputMetadataFilePath, duration: datetime.timedelta = None):
     chapters = list()
     with open(inputChapterFilePath, 'r') as f:
         for line in f:
             line = line.strip()
-            x = re.match(r"^(?:(\d{2}):)?(\d{1,2}):(\d{1,2}) (.*)", line)
+            x = re.match(r"^(?:(\d{,2}):)?(\d{1,2}):(\d{1,2})[\s-]+(.*)$", line)
             if not x:
-                print("SKIPPED: ", line)
-                continue
+                raise Exception("SKIPPED: ", line)
             hrs = int(x.group(1)) if x.group(1) else 0
             mins = int(x.group(2))
             secs = int(x.group(3))
@@ -32,6 +33,10 @@ def append_metadataFile(inputChapterFilePath, outputMetadataFilePath):
                 "startTime": timestamp
             }
             chapters.append(chap)
+        if duration is not None:
+            chapters.append({
+                "startTime": (duration.total_seconds()) * 1000
+            })
 
     text = ""
     for i in range(len(chapters) - 1):
@@ -73,18 +78,41 @@ def get_parser():
 
 def main():
     srcFilePath = sys.argv[1]
-    metadataFilePath = os.path.abspath(METADATA_FILENAME)
-    subprocess.call(["ffmpeg", "-y", "-i", srcFilePath, "-f", "ffmetadata", metadataFilePath])
+    metadataFile = tempfile.NamedTemporaryFile(delete=False)
+    metadataFile.close()
 
-    chapterFilePath = os.path.abspath(CHAPTER_FILENAME)
-    if not os.path.exists(chapterFilePath):
+    doEmbedChapters = False
+    doEmbedSubtitle = False
+
+    subFilePath = os.path.splitext(srcFilePath)[0] + ".srt"
+    if os.path.exists(subFilePath):
+        doEmbedSubtitle = True
+
+    chapterFileDir = os.path.dirname(srcFilePath)
+    chapterFilePath = os.path.join(chapterFileDir, CHAPTER_FILENAME)
+    if os.path.exists(chapterFilePath):
+        # get original metadata
+        cmdList = ["ffmpeg", "-hide_banner", "-y", "-i", srcFilePath, "-f", "ffmetadata", metadataFile.name]
+        subprocess.check_output(cmdList)
+
+        duration = ffprobe_duration(srcFilePath)
+        append_metadataFile(chapterFilePath, metadataFile.name, duration)
+        doEmbedChapters = True
+    else:
         print("No chapters.txt file found")
 
-    append_metadataFile(chapterFilePath, metadataFilePath)
-
     dstFilePath = get_dstFileName(srcFilePath)
-    subprocess.call(["ffmpeg", "-y", "-i", srcFilePath, "-i", METADATA_FILENAME,
-                     "-map_metadata", "1", "-codec", "copy", dstFilePath])
+    cmdList = ["ffmpeg", "-hide_banner", "-y", "-i", srcFilePath]
+    if doEmbedChapters:
+        cmdList.extend(["-i", metadataFile.name, "-map_metadata", "1"])
+    if doEmbedSubtitle:
+        cmdList.extend(["-i", subFilePath, "-c:s", "mov_text"])
+    cmdList.extend(["-c:v", "copy", "-c:a", "copy", dstFilePath])
+    if doEmbedChapters or doEmbedSubtitle:
+        retval = subprocess.call(cmdList)
+        if retval == 0:
+            os.remove(srcFilePath)
+            os.rename(dstFilePath, srcFilePath)
 
 
 if __name__ == '__main__':
