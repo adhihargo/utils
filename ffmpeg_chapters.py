@@ -76,8 +76,7 @@ def get_parser():
     return parser
 
 
-def main():
-    srcFilePath = sys.argv[1]
+def process_file(srcFilePath):
     metadataFile = tempfile.NamedTemporaryFile(delete=False)
     metadataFile.close()
 
@@ -89,7 +88,12 @@ def main():
         doEmbedSubtitle = True
 
     chapterFileDir = os.path.dirname(srcFilePath)
-    chapterFilePath = os.path.join(chapterFileDir, CHAPTER_FILENAME)
+    chapterFilePath = ""
+    for cfn in (os.path.splitext(srcFilePath)[0] + ".chp", CHAPTER_FILENAME):
+        cfp = os.path.join(chapterFileDir, cfn)
+        if os.path.exists(cfp):
+            chapterFilePath = cfp
+            break
     if os.path.exists(chapterFilePath):
         # get original metadata
         cmdList = ["ffmpeg", "-hide_banner", "-y", "-i", srcFilePath, "-f", "ffmetadata", metadataFile.name]
@@ -113,6 +117,13 @@ def main():
         if retval == 0:
             os.remove(srcFilePath)
             os.rename(dstFilePath, srcFilePath)
+
+        subprocess.call(["nircmd", "clonefiletime", srcFilePath, dstFilePath])
+
+
+def main():
+    for fp in sys.argv[1:]:
+        process_file(fp)
 
 
 if __name__ == '__main__':
