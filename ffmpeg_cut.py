@@ -17,6 +17,8 @@ from utils_lib import ffmpeg_commands, get_dstFileName
 def get_parser():
     parser = argparse.ArgumentParser(description="Cut an audio/video file.")
     parser.add_argument("file_name", metavar="FILE")
+    parser.add_argument("--dstdir",
+                        help="Destination directory.")
     parser.add_argument("-s", dest="start",
                         help="Timestamp of starting point to cut from.")
     parser.add_argument("-e", dest="end",
@@ -28,6 +30,8 @@ def get_parser():
                              "If set, other switches but -y and -V are ignored.")
     parser.add_argument("-y", dest="suppressQuestion", action="store_true",
                         help="Suppress question if file exists.")
+    parser.add_argument("-q", dest="suppressAlert", action="store_true",
+                        help="Suppress alert on operation end.")
     parser.add_argument("-V", dest="verbose", action="store_true",
                         help="Verbosity")
 
@@ -38,14 +42,17 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
+    dstDir = args.dstdir
     if args.conf:
         confFilePath = args.file_name
         config = configparser.ConfigParser(interpolation=None)
-        config.read(confFilePath)
+        config.read(confFilePath, encoding="utf-8")
         if not {"main", "sections"} <= set(config.sections()):
             parser.error("config file does not contain the required sections.")
         if not "src" in config["main"]:
             parser.error("config file does not state source file.")
+        if "dstdir" in config["main"]:
+            dstDir = config["main"]["dstdir"]
 
         srcFilePath = config["main"]["src"]
         if not os.path.isfile(srcFilePath):
@@ -95,7 +102,7 @@ def main():
             else:
                 sectionEnd = sectionPairs[index + 1][1] if (index < len(sectionPairs) - 1) else None
             sectionSuffix = "_{:>02}".format(section)
-            dstFilePath = get_dstFileName(srcFilePath, sectionSuffix)
+            dstFilePath = get_dstFileName(srcFilePath, sectionSuffix, dstDir=dstDir)
 
             logger.info("Processing section {}: {} - {}".format(section, sectionStart, sectionEnd))
             ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, sectionStart, sectionEnd,
@@ -107,7 +114,7 @@ def main():
 
     else:
         srcFilePath = args.file_name
-        dstFilePath = get_dstFileName(srcFilePath, args.suffix)
+        dstFilePath = get_dstFileName(srcFilePath, args.suffix, dstDir=dstDir)
         timeStart = args.start
         timeEnd = args.end
         suppressQuestion = args.suppressQuestion
@@ -115,7 +122,8 @@ def main():
         ffmpeg_commands.ffmpeg_cut(srcFilePath, dstFilePath, timeStart, timeEnd,
                                    suppressQuestion=suppressQuestion, verbose=verbose)
 
-    subprocess.call("echo /|choice /N 2> nul | echo dummy > nul", shell=True)
+    if not args.suppressAlert:
+        subprocess.call("echo /|choice /N 2> nul | echo dummy > nul", shell=True)
 
 
 if __name__ == '__main__':
