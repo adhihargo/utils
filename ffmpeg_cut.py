@@ -9,6 +9,8 @@ import subprocess
 import sys
 import time
 
+TEST_DURATION = os.getenv("FFMPEG_CUT_TEST_DURATION", "3")
+
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 sys.path.append(os.path.dirname(__file__))
 from utils_lib import ffmpeg_commands, get_dstFileName
@@ -53,6 +55,11 @@ def main():
             parser.error("config file does not state source file.")
         if "dstdir" in config["main"]:
             dstDir = config["main"]["dstdir"]
+        if "tstdur" in config["main"]:
+            testDuration = config["main"]["tstdur"]
+        else:
+            testDuration = TEST_DURATION
+        testDuration = int(testDuration)
 
         srcFilePath = config["main"]["src"]
         if not os.path.isfile(srcFilePath):
@@ -93,7 +100,7 @@ def main():
 
                 # sections suffixed with '*' will be processed only the first 5 seconds, intended for test cuts
                 start = datetime.timedelta(hours=startTime.tm_hour, minutes=startTime.tm_min, seconds=startTime.tm_sec)
-                end = start + datetime.timedelta(seconds=5)
+                end = start + datetime.timedelta(seconds=testDuration)
                 sectionEnd = str(end)
 
                 # append milliseconds to even out duration
