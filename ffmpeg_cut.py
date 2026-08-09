@@ -5,11 +5,13 @@ import configparser
 import datetime
 import logging
 import os
+import socket
 import subprocess
 import sys
 import time
 
 TEST_DURATION = os.getenv("FFMPEG_CUT_TEST_DURATION", "3")
+VLC_PORT = 4212
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 sys.path.append(os.path.dirname(__file__))
@@ -40,6 +42,30 @@ def get_parser():
     return parser
 
 
+def calculateTestSectionEnd(sectionStart, testDuration):
+    startStr = sectionStart if sectionStart else "0:0:0"
+    dotPos = startStr.find(".")  # exclude milliseconds if present
+    startTime = None
+    for fmtStr in ["%H:%M:%S", "%M:%S", "%S"]:
+        try:
+            startMinusMsecStr = startStr[:dotPos if dotPos > -1 else len(startStr)]
+            startTime = time.strptime(startMinusMsecStr, fmtStr)
+        except ValueError:
+            pass
+    if startTime is None:
+        raise ValueError("Invalid time string: {}".format(startStr))
+
+    # sections suffixed with '*' will be processed only the first 5 seconds, intended for test cuts
+    start = datetime.timedelta(hours=startTime.tm_hour, minutes=startTime.tm_min, seconds=startTime.tm_sec)
+    end = start + datetime.timedelta(seconds=testDuration)
+    sectionEnd = str(end)
+
+    # append milliseconds to even out duration
+    if dotPos > -1:
+        sectionEnd += startStr[dotPos:]
+    return sectionEnd
+
+
 def main():
     parser = get_parser()
     args = parser.parse_args()
@@ -55,10 +81,8 @@ def main():
             parser.error("config file does not state source file.")
         if "dstdir" in config["main"]:
             dstDir = config["main"]["dstdir"]
-        if "tstdur" in config["main"]:
-            testDuration = config["main"]["tstdur"]
-        else:
-            testDuration = TEST_DURATION
+        testDuration = config["main"].get("tstdur", TEST_DURATION)
+        vlcPort = int(config["main"]["vlcport"] or VLC_PORT) if "vlcport" in config["main"] else None
         testDuration = int(testDuration)
 
         srcFilePath = config["main"]["src"]
@@ -86,26 +110,7 @@ def main():
 
             sectionStart = value or None
             if sectionData["test"]:
-                startStr = sectionStart if sectionStart else "0:0:0"
-                dotPos = startStr.find(".")  # exclude milliseconds if present
-                startTime = None
-                for fmtStr in ["%H:%M:%S", "%M:%S", "%S"]:
-                    try:
-                        startMinusMsecStr = startStr[:dotPos if dotPos > -1 else len(startStr)]
-                        startTime = time.strptime(startMinusMsecStr, fmtStr)
-                    except ValueError:
-                        pass
-                if startTime is None:
-                    raise ValueError("Invalid time string: {}".format(startStr))
-
-                # sections suffixed with '*' will be processed only the first 5 seconds, intended for test cuts
-                start = datetime.timedelta(hours=startTime.tm_hour, minutes=startTime.tm_min, seconds=startTime.tm_sec)
-                end = start + datetime.timedelta(seconds=testDuration)
-                sectionEnd = str(end)
-
-                # append milliseconds to even out duration
-                if dotPos > -1:
-                    sectionEnd += startStr[dotPos:]
+                sectionEnd = calculateTestSectionEnd(sectionStart, testDuration)
             else:
                 sectionEnd = sectionPairs[index + 1][1] if (index < len(sectionPairs) - 1) else None
             sectionSuffix = "_{:>02}".format(section)
@@ -118,6 +123,19 @@ def main():
             timeEnd = datetime.datetime.now()
             timeDuration = timeEnd - timeStart
             logger.info("Section {} processing duration: {}".format(section, timeDuration))
+
+        if vlcPort:
+            # Automatically play current playlist item in VLC when
+            # finished processing config file. Start VLC with
+            # "--extraintf=rc --rc-host=127.0.0.1:4212" arguments to use
+            # this feature.
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vlcSocket:
+                vlcSocket.settimeout(1)
+                try:
+                    vlcSocket.connect(("localhost", vlcPort))
+                    vlcSocket.sendall(b"play\n")
+                except (ConnectionRefusedError, socket.timeout):
+                    logger.warning("Unable to connect to VLC")
 
     else:
         srcFilePath = args.file_name
