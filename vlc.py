@@ -4,17 +4,17 @@ import logging
 import os
 import socket
 
-CONFIG_FILENAME = "vlc.cfg"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "vlc.cfg")
+CONFIG_DEFAULTS = {"main": {"port": 4212}}
 
 logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
 
 
 def get_config():
-    if os.path.exists(CONFIG_FILENAME):
-        config = configparser.ConfigParser(interpolation=None)
-        config.read(CONFIG_FILENAME, encoding="utf-8")
-    else:
-        config = None
+    config = configparser.ConfigParser(interpolation=None)
+    config.read_dict(CONFIG_DEFAULTS)
+    if os.path.exists(CONFIG_PATH):
+        config.read(CONFIG_PATH, encoding="utf-8")
     return config
 
 
@@ -27,8 +27,6 @@ def get_parser(config):
 def get_parser_base(config):
     parser = argparse.ArgumentParser()
     env_port = int(os.getenv("VLC_TARGET_PORT", 4212))
-    if config and not {"main"} <= set(config.sections()):
-        parser.error("config file does not contain the required sections.")
     if config:
         config_port = int(config["main"].get("port", env_port))
     else:
@@ -54,7 +52,9 @@ def main():
     for filepath in args.files:
         vlc_cmd_str = "enqueue {}\r\n".format(filepath)
         vlc_address = ("localhost", args.port)
+        vlc_send_cmd(vlc_address, "pause\r\n")
         vlc_send_cmd(vlc_address, vlc_cmd_str)
+        vlc_send_cmd(vlc_address, "pause\r\n")
 
 
 if __name__ == '__main__':
