@@ -102,7 +102,7 @@ def main():
             sectionDict[sectionName[:-1] if sectionTest else sectionName] = sectionData
 
         sectionPairs = config.items("sections")
-        dstFilePath = None
+        dstFileList = []
         for index, (section, value) in enumerate(sectionPairs):
             timeStart = datetime.datetime.now()
 
@@ -127,6 +127,8 @@ def main():
             timeDuration = timeEnd - timeStart
             logger.info("Section {} processing duration: {}".format(section, timeDuration))
 
+            dstFileList.append(dstFilePath)
+
         if vlcPort:
             # Automatically play current playlist item in VLC when
             # finished processing config file. Start VLC with
@@ -135,8 +137,9 @@ def main():
             vlcAddress = ("localhost", vlcPort)
             send_cmd = partial(vlc_send_cmd, vlcAddress)
             send_cmd("clear")
-            if dstFilePath:
-                send_cmd("add {}".format(dstFilePath))
+            for idx, dstFilePath in enumerate(dstFileList):
+                cmd_pat = "add {}" if idx == 0 else "enqueue {}"
+                send_cmd(cmd_pat.format(dstFilePath))
 
     else:
         srcFilePath = args.file_name
