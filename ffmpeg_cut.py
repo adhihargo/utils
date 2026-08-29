@@ -5,10 +5,12 @@ import configparser
 import datetime
 import logging
 import os
-import socket
 import subprocess
 import sys
 import time
+from functools import partial
+
+from vlc import vlc_send_cmd
 
 TEST_DURATION = os.getenv("FFMPEG_CUT_TEST_DURATION", "3")
 VLC_PORT = 4212
@@ -100,6 +102,7 @@ def main():
             sectionDict[sectionName[:-1] if sectionTest else sectionName] = sectionData
 
         sectionPairs = config.items("sections")
+        dstFilePath = None
         for index, (section, value) in enumerate(sectionPairs):
             timeStart = datetime.datetime.now()
 
@@ -129,13 +132,11 @@ def main():
             # finished processing config file. Start VLC with
             # "--extraintf=rc --rc-host=127.0.0.1:4212" arguments to use
             # this feature.
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vlcSocket:
-                vlcSocket.settimeout(1)
-                try:
-                    vlcSocket.connect(("localhost", vlcPort))
-                    vlcSocket.sendall(b"play\n")
-                except (ConnectionRefusedError, socket.timeout):
-                    logger.warning("Unable to connect to VLC")
+            vlcAddress = ("localhost", vlcPort)
+            send_cmd = partial(vlc_send_cmd, vlcAddress)
+            send_cmd("clear")
+            if dstFilePath:
+                send_cmd("add {}".format(dstFilePath))
 
     else:
         srcFilePath = args.file_name
