@@ -127,7 +127,7 @@ def main():
         if window.accepted and vlc_port != args.port:
             logger.info("Setting new VLC port: {}".format(vlc_port))
             config_writer["port"] = vlc_port
-        if window.location_str:
+        if window.location_str and window.location_str != config["main"].get("geometry"):
             logger.info("Saving window location: {}".format(window.location_str))
             config_writer["geometry"] = window.location_str
 
@@ -136,6 +136,8 @@ def main():
     for filepath in args.files:
         vlc_cmd_str = vlc_cmd_pattern.format(filepath)
         vlc_send_cmd(vlc_address, vlc_cmd_str)
+    if args.files:
+        vlc_send_cmd(vlc_address, "play")
 
 
 if __name__ == '__main__':
