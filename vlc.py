@@ -3,6 +3,7 @@ import configparser
 import logging
 import os
 import socket
+import subprocess
 import tkinter as tk
 from configparser import ConfigParser
 from functools import partial
@@ -77,6 +78,8 @@ def get_parser(config):
                         help="Interpret arguments as commands")
     parser.add_argument("-C", dest="config", action="store_true",
                         help="Open GUI to edit config")
+    parser.add_argument("-r", "--run", action="store_true",
+                        help="Optionally run VLC listening to configured port if none detected")
     parser.add_argument("files", metavar="FILE", nargs="*",
                         help="Files to enqueue in VLC playlist")
     return parser
@@ -98,14 +101,26 @@ def get_parser_base(config):
     return parser
 
 
-def vlc_send_cmd(address, cmd_str):
+def vlc_send_cmd(address, cmd_str, timeout=1):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vlcSocket:
-        vlcSocket.settimeout(1)
+        vlcSocket.settimeout(timeout)
         try:
             vlcSocket.connect(address)
             vlcSocket.sendall(cmd_str.encode())
         except (ConnectionRefusedError, socket.timeout) as exc:
             logger.warning("Unable to connect to VLC: {}".format(exc))
+
+
+def vlc_check_listener(address):
+    has_listener = False
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vlcSocket:
+        vlcSocket.settimeout(1)
+        try:
+            retval = vlcSocket.connect_ex(address)
+            has_listener = retval == 0
+        except (ConnectionRefusedError, socket.timeout) as exc:
+            logger.warning("Unable to connect to VLC: {}".format(exc))
+    return has_listener
 
 
 def handle_accept(window):
@@ -154,10 +169,21 @@ def main():
             config_writer["geometry"] = window.location_str
 
     vlc_address = ("localhost", vlc_port)
+    if args.run:
+        vlc_dir = os.getenv("PATH_VLC", None)
+        vlc_path = os.path.join(vlc_dir, "vlc.exe") if vlc_dir else ""
+        if not vlc_check_listener(vlc_address) and vlc_path:
+            logger.info("Running VLC on port {}".format(vlc_port))
+            cmd_str = [vlc_path, "--extraintf", "rc", "--rc-quiet", "--rc-host=127.0.0.1:{}".format(vlc_port)]
+            _ = subprocess.Popen(cmd_str, creationflags=subprocess.DETACHED_PROCESS)
+
     vlc_cmd_pattern = "{}\r\n" if args.command else "enqueue {}\r\n"
-    for filepath in args.files:
+    timeout = 20 if args.run else 1
+    for idx, filepath in enumerate(args.files):
+        if idx == 1:
+            timeout = 1
         vlc_cmd_str = vlc_cmd_pattern.format(filepath)
-        vlc_send_cmd(vlc_address, vlc_cmd_str)
+        vlc_send_cmd(vlc_address, vlc_cmd_str, timeout=timeout)
     if args.files:
         vlc_send_cmd(vlc_address, "play")
 
