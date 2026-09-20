@@ -48,12 +48,15 @@ class ConfigWriter(object):
 
     def __init__(self, config):
         self.config = config
+        self.changed = False
 
     def __del__(self):
-        self.save()
+        if self.changed:
+            self.save()
 
     def __setitem__(self, key, value):
         self.config.set("main", key, str(value))
+        self.changed = True
 
     def save(self):
         with open(CONFIG_PATH, "w") as config_file:
@@ -105,6 +108,12 @@ def vlc_send_cmd(address, cmd_str):
             logger.warning("Unable to connect to VLC: {}".format(exc))
 
 
+def handle_accept(window):
+    window.location_str = "+{}+{}".format(window.winfo_x(), window.winfo_y())
+    window.accepted = True
+    window.quit()
+
+
 def handle_spb_port_keys(window: ConfigWindow, event: tk.Event):
     if event.keysym == "r" and event.state & 0x4:
         window.v_port.set(window.port_default)
@@ -114,12 +123,13 @@ def handle_spb_port_keys(window: ConfigWindow, event: tk.Event):
         if idx in range(1, port_count + 1):
             port = window.port_options[idx - 1]
             window.v_port.set(port)
+        if event.state & 0x20000:
+            # if alt is also pressed, immediately accept new number
+            handle_accept(window)
     elif event.keysym == "Escape":
         window.quit()
-    elif event.keysym == "Return":
-        window.location_str = "+{}+{}".format(window.winfo_x(), window.winfo_y())
-        window.accepted = True
-        window.quit()
+    elif event.keysym == "Return" or (event.keysym == "e" and event.state & 0x4):
+        handle_accept(window)
 
 
 def main():
