@@ -127,7 +127,7 @@ def main():
             timeDuration = timeEnd - timeStart
             logger.info("Section {} processing duration: {}".format(section, timeDuration))
 
-            dstFileList.append(dstFilePath)
+            dstFileList.append(os.path.abspath(dstFilePath))
 
         if vlcPort:
             # Automatically play current playlist item in VLC when
