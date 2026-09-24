@@ -77,11 +77,13 @@ def get_parser(config):
     parser.add_argument("-c", dest="command", action="store_true",
                         help="Interpret arguments as commands")
     parser.add_argument("-C", dest="config", action="store_true",
-                        help="Open GUI to edit config")
+                        help="Setting up port also edits config")
     parser.add_argument("-r", "--run", action="store_true",
                         help="Optionally run VLC listening to configured port if none detected")
     parser.add_argument("files", metavar="FILE", nargs="*",
                         help="Files to enqueue in VLC playlist")
+    parser.add_argument("-G", "--gui", action="store_true",
+                        help="Open GUI dialog to edit config")
     return parser
 
 
@@ -153,6 +155,9 @@ def main():
     args = parser.parse_args()
     vlc_port = args.port
     if args.config:
+        config_writer = ConfigWriter(config)
+        config_writer["port"] = vlc_port
+    elif args.gui:
         config_writer = ConfigWriter(config)
         location_str = config["main"].get("geometry")
 
