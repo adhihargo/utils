@@ -18,28 +18,35 @@ IF 'x%PATH_PODCAST%'=='x' (
 IF NOT 'x%1'=='x' (
 	IF '%~x1'=='.jpg' (
 		SET COVER="%~1"
-		ECHO COVER: !COVER!
+		SET COVER_SHORT="%~s1"
 	) ELSE IF '%~x1'=='.jpeg' (
 		SET COVER="%~1"
-		ECHO COVER: !COVER!
+		SET COVER_SHORT="%~s1"
 	) ELSE IF '%~x1'=='.mp4' (
 		SET VIDEO="%~1"
-		ECHO VIDEO: !VIDEO!
+		SET VIDEO_SHORT="%~s1"
 	) ELSE IF '%~x1'=='.m4a' (
 		SET VIDEO="%~1"
-		ECHO VIDEO: !VIDEO!
+		SET VIDEO_SHORT="%~s1"
 	)
 
 	IF NOT 'x!COVER!'=='x' IF NOT 'x!VIDEO!'=='x' (
+		ECHO VIDEO: !VIDEO!
+		ECHO COVER: !COVER!
 		FOR %%I IN (!VIDEO!) DO (
 			SET VIDEO_DIR=%%~dpI
 			SET VIDEO_BASE=%%~nI
 		)
-		move !COVER! "!VIDEO_DIR!\cover.jpeg"
-		ren !VIDEO! "!VIDEO_BASE!.aac"
+
+		move !COVER_SHORT! "!VIDEO_DIR!\cover.jpeg"
+		IF ERRORLEVEL 1 GOTO :loop_cleanup
+		ren !VIDEO_SHORT! "!VIDEO_BASE!.aac"
+		IF ERRORLEVEL 1 GOTO :loop_cleanup
 		CALL ffmpeg_setcover.cmd "!VIDEO_DIR!\!VIDEO_BASE!.aac"
+		del "!VIDEO_DIR!\cover.jpeg"
 		move "!VIDEO_DIR!\!VIDEO_BASE!.m4a" %PATH_PODCAST%
 
+		:loop_cleanup
 		REM Cleanup for next iteration
 		SET COVER=
 		SET VIDEO=
