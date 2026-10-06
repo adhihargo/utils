@@ -2,7 +2,7 @@
 #include <MsgBoxConstants.au3>
 #include <WinAPISys.au3>
 
-Global Const $ENV_VAR_NAME = "VPN_PWD_FC"
+Global Const $PWD_FILE_NAME = "vpn_pwd.cfg"
 
 Opt("WinTitleMatchMode", 3)
 Opt("MouseCoordMode", 2)
@@ -12,11 +12,11 @@ Exit
 Func Main()
 	Local $hActWnd = 0
 	Local $hWnd = 0
-	Local $pwd = EnvGet($ENV_VAR_NAME)
+	Local $pwd = FileReadLine($PWD_FILE_NAME)
 	Local $funcLoop = True
 
-	If Not $pwd Then
-		MsgBox($MB_ICONERROR, "Error", "Environment variable " & $ENV_VAR_NAME _
+	If Not @error = 0 Then
+		MsgBox($MB_ICONERROR, "Error", "File " & $PWD_FILE_NAME _
 			& " is nonexistent or empty. Script will now exit.")
 		Return
 	EndIf
