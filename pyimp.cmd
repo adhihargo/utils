@@ -1,7 +1,7 @@
 @ECHO OFF
 SETLOCAL
-SET BIN_ISORT=C:\prog\venv\312_devutils\Scripts\isort.exe
-SET BIN_AUTOFLAKE=C:\prog\venv\312_devutils\Scripts\autoflake.exe
+SET BIN_ISORT=%PATH_PY_DEVUTILS%\Scripts\isort.exe
+SET BIN_AUTOFLAKE=%PATH_PY_DEVUTILS%\Scripts\autoflake.exe
 
 %BIN_ISORT% %*
 %BIN_AUTOFLAKE% --in-place --remove-unused-variables --expand-star-imports %*
