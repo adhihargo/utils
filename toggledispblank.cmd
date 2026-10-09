@@ -10,6 +10,11 @@ IF 'x%MULTISCREEN_DISPLAY%'=='x' (
 	SET MULTISCREEN_DISPLAY=\\.\DISPLAY1
 )
 
+REM User-supplied parameter overrides previously set value
+IF NOT 'x%1'=='x' (
+	SET MULTISCREEN_DISPLAY=%1
+)
+
 start %PATH_MULTISCREENBLANK%\MultiscreenBlank2.exe /toggle id %MULTISCREEN_DISPLAY%
 
 ENDLOCAL
