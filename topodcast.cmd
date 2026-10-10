@@ -43,6 +43,7 @@ IF NOT 'x%1'=='x' (
 		ren !VIDEO_SHORT! "!VIDEO_BASE!.aac"
 		IF ERRORLEVEL 1 GOTO :loop_cleanup
 		CALL ffmpeg_setcover.cmd "!VIDEO_DIR!\!VIDEO_BASE!.aac"
+		IF ERRORLEVEL 1 GOTO :loop_cleanup
 		del "!VIDEO_DIR!\cover.jpeg"
 		move "!VIDEO_DIR!\!VIDEO_BASE!.m4a" %PATH_PODCAST%
 

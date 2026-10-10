@@ -11,11 +11,12 @@ IF '%~x1'=='.mp4' GOTO :getcover
 	GOTO :loopend
 :convertcover
 	magick -quality 85 "%~1" "%~dp1\cover.jpeg"
-	IF ERRORLEVEL 1 GOTO :loopend
+	IF ERRORLEVEL 1 exit /b 1
 	del "%~1"
 	GOTO :loopend
 :getcover
 	ffmpeg -hide_banner -y -i "%~1" -map 0:v:0 -c:v mjpeg -frames:v 1 "%~dp1\cover.jpeg"
+	IF ERRORLEVEL 1 exit /b 1
 :loopend
 	SHIFT
 	GOTO :loopstart
