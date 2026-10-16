@@ -44,6 +44,7 @@ def list_latest_files(args, root_path: Path):
             ren_file_list.append(f_path)
     print("Last index: {}".format(last_index))
 
+    digits = len(last_index) if last_index else 2
     if last_index is None:
         last_index = 0
     else:
@@ -53,7 +54,7 @@ def list_latest_files(args, root_path: Path):
         if args.ascii:
             f_name = f_name.encode("ascii", "ignore").decode("ascii")  # remove problematic chars
         f_name = PREFIX_RE.sub("", f_name)
-        f_path_new = Path(f_path.parent, "{:02}. ".format(f_index) + f_name)
+        f_path_new = Path(f_path.parent, "{{:0{}}}. ".format(digits).format(f_index) + f_name)
         print("Renaming: ", f_path_new)
         f_path.rename(f_path_new)
 
