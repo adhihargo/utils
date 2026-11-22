@@ -1,5 +1,4 @@
 @ECHO OFF
-SETLOCAL ENABLEDELAYEDEXPANSION
 
 IF 'x%1'=='x' (
 	ECHO Drag a video file [.mp4] and cover image file [.jpeg, .jpg] to this script.
@@ -14,6 +13,7 @@ IF 'x%PATH_PODCAST%'=='x' (
 	GOTO :exit
 )
 
+SETLOCAL
 :loop
 IF NOT 'x%1'=='x' (
 	IF '%~x1'=='.jpg' (
@@ -30,6 +30,7 @@ IF NOT 'x%1'=='x' (
 		SET VIDEO_SHORT="%~s1"
 	)
 
+	SETLOCAL ENABLEDELAYEDEXPANSION
 	IF NOT 'x!COVER!'=='x' IF NOT 'x!VIDEO!'=='x' (
 		ECHO VIDEO: !VIDEO!
 		ECHO COVER: !COVER!
@@ -52,6 +53,7 @@ IF NOT 'x%1'=='x' (
 		SET COVER=
 		SET VIDEO=
 	)
+	ENDLOCAL
 	SHIFT /1
 
 	GOTO :loop
