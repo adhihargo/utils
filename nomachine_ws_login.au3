@@ -16,13 +16,7 @@ Func CheckWindow()
 	While $funcLoop
 		$hwnd = WinActivate("NoMachine - ")
 		If $hwnd == 0 Then
-			$dlgVal = MsgBox($MB_ICONERROR + $MB_RETRYCANCEL, _
-				"Error", "NoMachine window not found. Run it then retry, or cancel:")
-			If $dlgVal == $IDCANCEL Then
-				Return False
-			Else
-				ContinueLoop
-			EndIf
+			Return False
 		EndIf
 		$funcLoop = False
 	WEnd
@@ -33,19 +27,19 @@ Func Main()
 	Local $pwd = FileReadLine($PWD_FILE_NAME)
 	If Not @error = 0 Then
 		MsgBox($MB_ICONERROR, "Error", "File " & $PWD_FILE_NAME _
-			& " is nonexistent or empty. Script will now exit.")
+				 & " is nonexistent or empty. Script will now exit.")
 		Return
 	EndIf
 
-	If Not CheckWindow() Then Return;
+	If Not CheckWindow() Then Return
 
-	;~ Click the top left button of the screen
-	Local $mPos = MouseGetPos();
-	MouseMove(40, 20, 1);
-	MouseClick($MOUSE_CLICK_LEFT);
-	MouseMove($mPos[0], $mPos[1], 1);
+	; Click the top left button of the screen
+	Local $mPos = MouseGetPos()
+	MouseMove(40, 20, 1)
+	MouseClick($MOUSE_CLICK_LEFT)
+	MouseMove($mPos[0], $mPos[1], 1)
 
-	;~ Trigger password input
+	; Trigger password input
 	For $i = 1 To 2
 		Send("{ESC}")
 		Sleep(500)
