@@ -30,7 +30,7 @@ Func Main()
 		$hWnd = WinActivate("FortiClient")
 		If $hWnd == 0 Then
 			ShellExecute($FORTICLIENT_PATH)
-			WinWait("FortiClient")
+			WinWaitActive("FortiClient")
 		Else
 			$funcLoop = False
 		EndIf
