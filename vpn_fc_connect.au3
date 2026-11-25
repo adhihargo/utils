@@ -33,7 +33,7 @@ Func Main()
 		Return
 	EndIf
 
-	If Not CheckWindow Then Return
+	If Not CheckWindow() Then Return
 
 	Local $mPos = MouseGetPos()
 	; Click somewhere in the window, tab to password field
