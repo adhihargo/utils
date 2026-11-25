@@ -1,6 +1,7 @@
 #include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 
+Global Const $NXS_FILE_NAME = "nomachine_nxs_path.cfg"
 Global Const $PWD_FILE_NAME = "vpn_pwd.cfg"
 
 Opt("WinTitleMatchMode", 1)
@@ -10,12 +11,20 @@ Main()
 Exit
 
 Func CheckWindow()
-	Local $hwnd = 0
+	Local $nxs_path = FileReadLine($NXS_FILE_NAME)
+	If Not @error = 0 Then
+		MsgBox($MB_ICONERROR, "Error", "File " & $NXS_FILE_NAME _
+				 & " is nonexistent or empty. Script will now exit.")
+		Return False
+	EndIf
+
+	Local $hWnd = 0
 	Local $funcLoop = True
-	Local $dlgVal = $IDRETRY
 	While $funcLoop
-		$hwnd = WinActivate("NoMachine - ")
-		If $hwnd == 0 Then
+		$hWnd = WinActivate("NoMachine - ")
+		If $hWnd == 0 Then
+			ShellExecute($nxs_path)
+			WinWaitActive("NoMachine - ")
 			Return False
 		EndIf
 		$funcLoop = False
