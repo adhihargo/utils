@@ -10,22 +10,9 @@ Opt("MouseCoordMode", 2)
 Main()
 Exit
 
-Func Main()
-	Local $hActWnd = 0
+Func CheckWindow()
 	Local $hWnd = 0
-	Local $pwd = FileReadLine($PWD_FILE_NAME)
 	Local $funcLoop = True
-
-	If Not @error = 0 Then
-		MsgBox($MB_ICONERROR, "Error", "File " & $PWD_FILE_NAME _
-				 & " is nonexistent or empty. Script will now exit.")
-		Return
-	EndIf
-
-	Sleep(100)
-	$hActWnd = _WinAPI_GetActiveWindow()
-
-	Local $dlgVal = $IDRETRY
 	While $funcLoop
 		$hWnd = WinActivate("FortiClient")
 		If $hWnd == 0 Then
@@ -35,6 +22,18 @@ Func Main()
 			$funcLoop = False
 		EndIf
 	WEnd
+	Return True
+EndFunc
+
+Func Main()
+	Local $pwd = FileReadLine($PWD_FILE_NAME)
+	If Not @error = 0 Then
+		MsgBox($MB_ICONERROR, "Error", "File " & $PWD_FILE_NAME _
+				 & " is nonexistent or empty. Script will now exit.")
+		Return
+	EndIf
+
+	If Not CheckWindow Then Return
 
 	Local $mPos = MouseGetPos()
 	; Click somewhere in the window, tab to password field
